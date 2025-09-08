@@ -1,6 +1,7 @@
 # BANK_USER_CHURN_ANALYSYS
 
 CUSTOMER CHURN PREDICTION IN BANKING INDUSTRY
+
 • Leveraged Python to build predictive algorithms for a bank, aiming to forecast customer churn likelihood using
 labeled historical data, preprocessed dataset by performing data cleaning, categorical feature transformation, and
 standardization
