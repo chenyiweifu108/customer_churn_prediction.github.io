@@ -2,8 +2,8 @@
 
 CUSTOMER CHURN PREDICTION IN BANKING INDUSTRY
 
-• Leveraged Python to build predictive algorithms for a bank, aiming to forecast customer churn likelihood using
-labeled historical data, preprocessed dataset by performing data cleaning, categorical feature transformation, and
+• Leveraged Python to build predictive algorithms for a bank(https://www.kaggle.com/datasets/radheshyamkollipara/bank-customer-churn/data), 
+aiming to forecast customer churn likelihood using labeled historical data, preprocessed dataset by performing data cleaning, categorical feature transformation, and
 standardization
 
 • Trained classic supervised ML models—Logistic Regression, Random Forest, and K - Nearest Neighbors. Applied
