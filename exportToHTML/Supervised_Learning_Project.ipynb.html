@@ -1,0 +1,397 @@
+<html>
+<head>
+<title>Supervised_Learning_Project.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+.s1 { color: #cf8e6d;}
+.s2 { color: #bcbec4;}
+.s3 { color: #6aab73;}
+.s4 { color: #7a7e85;}
+.s5 { color: #2aacb8;}
+.ls0 { height: 1px; border-width: 0; color: #43454a; background-color:#43454a}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Supervised_Learning_Project.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% md 
+## Bank Customer Churn Prediction 
+ 
+ 
+ 
+ <hr class="ls0">#%% md 
+In this project, I use supervised learning models to identify customers who are likely to churn in the future. Furthermore, we will analyze top factors that influence user retention. [Dataset information](https://www.kaggle.com/adammaus/predicting-churn-for-bank-customers). <hr class="ls0">#%% md 
+## Contents <hr class="ls0">#%% md 
+</span>
+<span class="s0">* [Part 1: Data Exploration](#Part-1:-Data-Exploration) 
+* [Part 2: Feature Preprocessing](#Part-2:-Feature-Preprocessing) 
+* [Part 3: Model Training and Results Evaluation](#Part-3:-Model-Training-and-Result-Evaluation) <hr class="ls0">#%% md 
+# Part 0: Setup Google Drive Environment / Data Collection 
+check this [link](https://colab.research.google.com/notebooks/io.ipynb) for more info <hr class="ls0">#%% 
+</span><span class="s1">import </span><span class="s0">numpy </span><span class="s1">as </span><span class="s0">np</span>
+<span class="s1">import </span><span class="s0">pandas </span><span class="s1">as </span><span class="s0">pd</span>
+
+<span class="s0">churn_df </span><span class="s2">= </span><span class="s0">pd</span><span class="s2">.</span><span class="s0">read_csv</span><span class="s2">(</span><span class="s3">'bank.data.csv'</span><span class="s2">)</span>
+<span class="s0">churn_df</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span>
+<hr class="ls0"><span class="s0">#%% md 
+# Part 1: Data Exploration <hr class="ls0">#%% md 
+### Part 1.1: Understand the Raw Dataset <hr class="ls0">#%% 
+</span><span class="s4"># check data info</span>
+<span class="s0">churn_df</span><span class="s2">.</span><span class="s0">info</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># check the unique values for each column</span>
+<span class="s0">churn_df</span><span class="s2">.</span><span class="s0">nunique</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># Get target variable</span>
+<span class="s0">y </span><span class="s2">= </span><span class="s0">churn_df</span><span class="s2">[</span><span class="s3">'Exited'</span><span class="s2">]</span><hr class="ls0"><span class="s0">#%% md 
+### Part 1.2:  Understand the features <hr class="ls0">#%% 
+</span><span class="s4"># check missing values</span>
+<span class="s0">churn_df</span><span class="s2">.</span><span class="s0">isnull</span><span class="s2">().</span><span class="s0">sum</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># understand Numerical feature</span>
+<span class="s4"># discrete/continuous</span>
+<span class="s4"># 'CreditScore', 'Age', 'Tenure', 'NumberOfProducts'</span>
+<span class="s4"># 'Balance', 'EstimatedSalary'</span>
+<span class="s0">churn_df</span><span class="s2">[[</span><span class="s3">'CreditScore'</span><span class="s2">, </span><span class="s3">'Age'</span><span class="s2">, </span><span class="s3">'Tenure'</span><span class="s2">, </span><span class="s3">'NumOfProducts'</span><span class="s2">,</span><span class="s3">'Balance'</span><span class="s2">, </span><span class="s3">'EstimatedSalary'</span><span class="s2">]].</span><span class="s0">describe</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># check the feature distribution</span>
+<span class="s4"># pandas.DataFrame.describe()</span>
+<span class="s4"># boxplot, distplot, countplot</span>
+<span class="s1">import </span><span class="s0">matplotlib</span><span class="s2">.</span><span class="s0">pyplot </span><span class="s1">as </span><span class="s0">plt</span>
+<span class="s1">import </span><span class="s0">seaborn </span><span class="s1">as </span><span class="s0">sns</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># boxplot for numerical feature</span>
+<span class="s0">_</span><span class="s2">,</span><span class="s0">axss </span><span class="s2">= </span><span class="s0">plt</span><span class="s2">.</span><span class="s0">subplots</span><span class="s2">(</span><span class="s5">2</span><span class="s2">,</span><span class="s5">3</span><span class="s2">, </span><span class="s0">figsize</span><span class="s2">=[</span><span class="s5">20</span><span class="s2">,</span><span class="s5">10</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">boxplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">y </span><span class="s2">=</span><span class="s3">'CreditScore'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">0</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">boxplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">y </span><span class="s2">=</span><span class="s3">'Age'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">1</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">boxplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">y </span><span class="s2">=</span><span class="s3">'Tenure'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">2</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">boxplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">y </span><span class="s2">=</span><span class="s3">'NumOfProducts'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">1</span><span class="s2">][</span><span class="s5">0</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">boxplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">y </span><span class="s2">=</span><span class="s3">'Balance'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">1</span><span class="s2">][</span><span class="s5">1</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">boxplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">y </span><span class="s2">=</span><span class="s3">'EstimatedSalary'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">1</span><span class="s2">][</span><span class="s5">2</span><span class="s2">])</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># understand categorical feature</span>
+<span class="s4"># 'Geography', 'Gender'</span>
+<span class="s4"># 'HasCrCard', 'IsActiveMember'</span>
+<span class="s0">_</span><span class="s2">,</span><span class="s0">axss </span><span class="s2">= </span><span class="s0">plt</span><span class="s2">.</span><span class="s0">subplots</span><span class="s2">(</span><span class="s5">2</span><span class="s2">,</span><span class="s5">2</span><span class="s2">, </span><span class="s0">figsize</span><span class="s2">=[</span><span class="s5">20</span><span class="s2">,</span><span class="s5">10</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">countplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">hue</span><span class="s2">=</span><span class="s3">'Geography'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">0</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">countplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">hue</span><span class="s2">=</span><span class="s3">'Gender'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">1</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">countplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">hue</span><span class="s2">=</span><span class="s3">'HasCrCard'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">1</span><span class="s2">][</span><span class="s5">0</span><span class="s2">])</span>
+<span class="s0">sns</span><span class="s2">.</span><span class="s0">countplot</span><span class="s2">(</span><span class="s0">x</span><span class="s2">=</span><span class="s3">'Exited'</span><span class="s2">, </span><span class="s0">hue</span><span class="s2">=</span><span class="s3">'IsActiveMember'</span><span class="s2">, </span><span class="s0">data</span><span class="s2">=</span><span class="s0">churn_df</span><span class="s2">, </span><span class="s0">ax</span><span class="s2">=</span><span class="s0">axss</span><span class="s2">[</span><span class="s5">1</span><span class="s2">][</span><span class="s5">1</span><span class="s2">])</span><hr class="ls0"><span class="s0">#%% md 
+# Part 2: Feature Preprocessing <hr class="ls0">#%% 
+</span><span class="s4"># Get feature space by dropping useless feature</span>
+<span class="s0">to_drop </span><span class="s2">= [</span><span class="s3">'RowNumber'</span><span class="s2">,</span><span class="s3">'CustomerId'</span><span class="s2">,</span><span class="s3">'Surname'</span><span class="s2">,</span><span class="s3">'Exited'</span><span class="s2">]</span>
+<span class="s0">X </span><span class="s2">= </span><span class="s0">churn_df</span><span class="s2">.</span><span class="s0">drop</span><span class="s2">(</span><span class="s0">to_drop</span><span class="s2">, </span><span class="s0">axis </span><span class="s2">= </span><span class="s5">1</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+X</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+X</span><span class="s2">.</span><span class="s0">dtypes</span><hr class="ls0"><span class="s0">#%% 
+cat_cols </span><span class="s2">= </span><span class="s0">X</span><span class="s2">.</span><span class="s0">columns</span><span class="s2">[</span><span class="s0">X</span><span class="s2">.</span><span class="s0">dtypes </span><span class="s2">== </span><span class="s3">'object'</span><span class="s2">]</span>
+<span class="s0">num_cols </span><span class="s2">= </span><span class="s0">X</span><span class="s2">.</span><span class="s0">columns</span><span class="s2">[(</span><span class="s0">X</span><span class="s2">.</span><span class="s0">dtypes </span><span class="s2">== </span><span class="s3">'float64'</span><span class="s2">) | (</span><span class="s0">X</span><span class="s2">.</span><span class="s0">dtypes </span><span class="s2">== </span><span class="s3">'int64'</span><span class="s2">)]</span><hr class="ls0"><span class="s0">#%% 
+num_cols</span><hr class="ls0"><span class="s0">#%% 
+cat_cols</span><hr class="ls0"><span class="s0">#%% md 
+Split dataset <hr class="ls0">#%% 
+</span><span class="s4"># Splite data into training and testing</span>
+<span class="s4"># 100 -&gt; 75:y=1, 25:y=0</span>
+<span class="s4"># training(80): 60 y=1; 20 y=0</span>
+<span class="s4"># testing(20):  15 y=1; 5 y=0</span>
+
+<span class="s1">from </span><span class="s0">sklearn </span><span class="s1">import </span><span class="s0">model_selection</span>
+
+<span class="s4"># Reserve 25% for testing</span>
+<span class="s4"># stratify example:</span>
+<span class="s4"># 100 -&gt; y: 80 '0', 20 '1' -&gt; 4:1</span>
+<span class="s4"># 80% training 64: '0', 16:'1' -&gt; 4:1</span>
+<span class="s4"># 20% testing  16:'0', 4: '1' -&gt; 4:1</span>
+<span class="s0">X_train</span><span class="s2">, </span><span class="s0">X_test</span><span class="s2">, </span><span class="s0">y_train</span><span class="s2">, </span><span class="s0">y_test </span><span class="s2">= </span><span class="s0">model_selection</span><span class="s2">.</span><span class="s0">train_test_split</span><span class="s2">(</span><span class="s0">X</span><span class="s2">, </span><span class="s0">y</span><span class="s2">, </span><span class="s0">test_size</span><span class="s2">=</span><span class="s5">0.25</span><span class="s2">, </span><span class="s0">stratify </span><span class="s2">= </span><span class="s0">y</span><span class="s2">, </span><span class="s0">random_state </span><span class="s2">= </span><span class="s5">1</span><span class="s2">) </span><span class="s4">#stratified sampling</span>
+
+<span class="s0">print</span><span class="s2">(</span><span class="s3">'training data has ' </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">.</span><span class="s0">shape</span><span class="s2">[</span><span class="s5">0</span><span class="s2">]) + </span><span class="s3">' observation with ' </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">.</span><span class="s0">shape</span><span class="s2">[</span><span class="s5">1</span><span class="s2">]) + </span><span class="s3">' features'</span><span class="s2">)</span>
+<span class="s0">print</span><span class="s2">(</span><span class="s3">'test data has ' </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">.</span><span class="s0">shape</span><span class="s2">[</span><span class="s5">0</span><span class="s2">]) + </span><span class="s3">' observation with ' </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">.</span><span class="s0">shape</span><span class="s2">[</span><span class="s5">1</span><span class="s2">]) + </span><span class="s3">' features'</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+* 10000 -&gt; 8000 '0' + 2000 '1' 
+ 
+* 25% test 75% training 
+--- 
+without stratified sampling: 
+• extreme case: 
+--- 
+1. testing: 2000 '1' + 500 '0' 
+2. training: 7500 '0' 
+--- 
+with stratified sampling: 
+1. testing: 2000 '0' + 500 '1' 
+2. training: 6000 '0' + 1500 '1' 
+ <hr class="ls0">#%% md 
+Read more for handling [categorical feature](https://github.com/scikit-learn-contrib/categorical-encoding), and there is an awesome package for [encoding](http://contrib.scikit-learn.org/category_encoders/). <hr class="ls0">#%% 
+X_train</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># One hot encoding</span>
+<span class="s4"># another way: get_dummies</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">preprocessing </span><span class="s1">import </span><span class="s0">OneHotEncoder</span>
+
+<span class="s1">def </span><span class="s0">OneHotEncoding</span><span class="s2">(</span><span class="s0">df</span><span class="s2">, </span><span class="s0">enc</span><span class="s2">, </span><span class="s0">categories</span><span class="s2">):</span>
+  <span class="s0">transformed </span><span class="s2">= </span><span class="s0">pd</span><span class="s2">.</span><span class="s0">DataFrame</span><span class="s2">(</span><span class="s0">enc</span><span class="s2">.</span><span class="s0">transform</span><span class="s2">(</span><span class="s0">df</span><span class="s2">[</span><span class="s0">categories</span><span class="s2">]).</span><span class="s0">toarray</span><span class="s2">(), </span><span class="s0">columns </span><span class="s2">= </span><span class="s0">enc</span><span class="s2">.</span><span class="s0">get_feature_names_out</span><span class="s2">(</span><span class="s0">categories</span><span class="s2">))</span>
+  <span class="s1">return </span><span class="s0">pd</span><span class="s2">.</span><span class="s0">concat</span><span class="s2">([</span><span class="s0">df</span><span class="s2">.</span><span class="s0">reset_index</span><span class="s2">(</span><span class="s0">drop</span><span class="s2">=</span><span class="s1">True</span><span class="s2">), </span><span class="s0">transformed</span><span class="s2">], </span><span class="s0">axis</span><span class="s2">=</span><span class="s5">1</span><span class="s2">).</span><span class="s0">drop</span><span class="s2">(</span><span class="s0">categories</span><span class="s2">, </span><span class="s0">axis</span><span class="s2">=</span><span class="s5">1</span><span class="s2">)</span>
+
+<span class="s0">categories </span><span class="s2">= [</span><span class="s3">'Geography'</span><span class="s2">]</span>
+<span class="s0">enc_ohe </span><span class="s2">= </span><span class="s0">OneHotEncoder</span><span class="s2">()</span>
+<span class="s0">enc_ohe</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">[</span><span class="s0">categories</span><span class="s2">])</span>
+
+<span class="s0">X_train </span><span class="s2">= </span><span class="s0">OneHotEncoding</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">, </span><span class="s0">enc_ohe</span><span class="s2">, </span><span class="s0">categories</span><span class="s2">)</span>
+<span class="s0">X_test </span><span class="s2">= </span><span class="s0">OneHotEncoding</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">, </span><span class="s0">enc_ohe</span><span class="s2">, </span><span class="s0">categories</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+X_train</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># Ordinal encoding</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">preprocessing </span><span class="s1">import </span><span class="s0">OrdinalEncoder</span>
+
+<span class="s0">categories </span><span class="s2">= [</span><span class="s3">'Gender'</span><span class="s2">]</span>
+<span class="s0">enc_oe </span><span class="s2">= </span><span class="s0">OrdinalEncoder</span><span class="s2">()</span>
+<span class="s0">enc_oe</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">[</span><span class="s0">categories</span><span class="s2">])</span>
+
+<span class="s0">X_train</span><span class="s2">[</span><span class="s0">categories</span><span class="s2">] = </span><span class="s0">enc_oe</span><span class="s2">.</span><span class="s0">transform</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">[</span><span class="s0">categories</span><span class="s2">])</span>
+<span class="s0">X_test</span><span class="s2">[</span><span class="s0">categories</span><span class="s2">] = </span><span class="s0">enc_oe</span><span class="s2">.</span><span class="s0">transform</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">[</span><span class="s0">categories</span><span class="s2">])</span><hr class="ls0"><span class="s0">#%% 
+X_train</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% md 
+Standardize/Normalize Data <hr class="ls0">#%% 
+</span><span class="s4"># Scale the data, using standardization</span>
+<span class="s4"># standardization (x-mean)/std</span>
+<span class="s4"># normalization (x-x_min)/(x_max-x_min) -&gt;[0,1]</span>
+
+<span class="s4"># 1. speed up gradient descent</span>
+<span class="s4"># 2. same scale</span>
+<span class="s4"># 3. algorithm requirments</span>
+
+<span class="s4"># for example, use training data to train the standardscaler to get mean and std</span>
+<span class="s4"># apply mean and std to both training and testing data.</span>
+<span class="s4"># fit_transform does the training and applying, transform only does applying.</span>
+<span class="s4"># Because we can't use any info from test, and we need to do the same modification</span>
+<span class="s4"># to testing data as well as training data</span>
+
+<span class="s4"># https://scikit-learn.org/stable/auto_examples/preprocessing/plot_all_scaling.html#sphx-glr-auto-examples-preprocessing-plot-all-scaling-py</span>
+<span class="s4"># https://scikit-learn.org/stable/modules/preprocessing.html</span>
+
+<span class="s4"># min-max example: (x-x_min)/(x_max-x_min)</span>
+<span class="s4"># [1,2,3,4,5,6,100] -&gt; fit(min:1, max:6) (scalar.min = 1, scalar.max = 6) -&gt; transform [(1-1)/(6-1),(2-1)/(6-1)..]</span>
+<span class="s4"># scalar.fit(train) -&gt; min:1, max:100</span>
+<span class="s4"># scalar.transform(apply to x) -&gt; apply min:1, max:100 to X_train</span>
+<span class="s4"># scalar.transform -&gt; apply min:1, max:100 to X_test</span>
+
+<span class="s4"># scalar.fit -&gt; mean:1, std:100</span>
+<span class="s4"># scalar.transform -&gt; apply mean:1, std:100 to X_train</span>
+<span class="s4"># scalar.transform -&gt; apply mean:1, std:100 to X_test</span>
+
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">preprocessing </span><span class="s1">import </span><span class="s0">StandardScaler</span>
+<span class="s0">scaler </span><span class="s2">= </span><span class="s0">StandardScaler</span><span class="s2">()</span>
+<span class="s0">scaler</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">[</span><span class="s0">num_cols</span><span class="s2">])</span>
+
+<span class="s0">X_train</span><span class="s2">[</span><span class="s0">num_cols</span><span class="s2">] = </span><span class="s0">scaler</span><span class="s2">.</span><span class="s0">transform</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">[</span><span class="s0">num_cols</span><span class="s2">])</span>
+<span class="s0">X_test</span><span class="s2">[</span><span class="s0">num_cols</span><span class="s2">] = </span><span class="s0">scaler</span><span class="s2">.</span><span class="s0">transform</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">[</span><span class="s0">num_cols</span><span class="s2">])</span><hr class="ls0"><span class="s0">#%% 
+X_train</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% md 
+# Part 3: Model Training and Result Evaluation <hr class="ls0">#%% md 
+### Part 3.1: Model Training <hr class="ls0">#%% 
+</span><span class="s4">#@title build models</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">linear_model </span><span class="s1">import </span><span class="s0">LogisticRegression</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">neighbors </span><span class="s1">import </span><span class="s0">KNeighborsClassifier</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">ensemble </span><span class="s1">import </span><span class="s0">RandomForestClassifier</span>
+
+<span class="s4"># Logistic Regression</span>
+<span class="s0">classifier_logistic </span><span class="s2">= </span><span class="s0">LogisticRegression</span><span class="s2">()</span>
+
+<span class="s4"># K Nearest Neighbors</span>
+<span class="s0">classifier_KNN </span><span class="s2">= </span><span class="s0">KNeighborsClassifier</span><span class="s2">()</span>
+
+<span class="s4"># Random Forest</span>
+<span class="s0">classifier_RF </span><span class="s2">= </span><span class="s0">RandomForestClassifier</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># Train the model</span>
+<span class="s0">classifier_logistic</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">, </span><span class="s0">y_train</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># Prediction of test data</span>
+<span class="s0">classifier_logistic</span><span class="s2">.</span><span class="s0">predict</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># Accuracy of test data</span>
+<span class="s0">classifier_logistic</span><span class="s2">.</span><span class="s0">score</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">, </span><span class="s0">y_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+### (Optional) Part 3.2: Use Grid Search to Find Optimal Hyperparameters 
+alternative: random search <hr class="ls0">#%% 
+</span><span class="s4">#Loss/cost function --&gt; (wx + b - y) ^2 + ƛ * |w| --&gt; ƛ is a hyperparameter</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">model_selection </span><span class="s1">import </span><span class="s0">GridSearchCV</span>
+
+<span class="s4"># helper function for printing out grid search results</span>
+<span class="s1">def </span><span class="s0">print_grid_search_metrics</span><span class="s2">(</span><span class="s0">gs</span><span class="s2">):</span>
+    <span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;Best score: &quot; </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">gs</span><span class="s2">.</span><span class="s0">best_score_</span><span class="s2">))</span>
+    <span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;Best parameters set:&quot;</span><span class="s2">)</span>
+    <span class="s0">best_parameters </span><span class="s2">= </span><span class="s0">gs</span><span class="s2">.</span><span class="s0">best_params_</span>
+    <span class="s1">for </span><span class="s0">param_name </span><span class="s1">in </span><span class="s0">sorted</span><span class="s2">(</span><span class="s0">best_parameters</span><span class="s2">.</span><span class="s0">keys</span><span class="s2">()):</span>
+        <span class="s0">print</span><span class="s2">(</span><span class="s0">param_name </span><span class="s2">+ </span><span class="s3">':' </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">best_parameters</span><span class="s2">[</span><span class="s0">param_name</span><span class="s2">]))</span><hr class="ls0"><span class="s0">#%% md 
+#### Part 3.2.1: Find Optimal Hyperparameters - LogisticRegression <hr class="ls0">#%% 
+</span><span class="s4"># Possible hyperparamter options for Logistic Regression Regularization</span>
+<span class="s4"># Penalty is choosed from L1 or L2</span>
+<span class="s4"># C is the 1/lambda value(weight) for L1 and L2</span>
+<span class="s4"># solver: algorithm to find the weights that minimize the cost function</span>
+
+<span class="s4"># ('l1', 0.01)('l1', 0.05) ('l1', 0.1) ('l1', 0.2)('l1', 1)</span>
+<span class="s4"># ('12', 0.01)('l2', 0.05) ('l2', 0.1) ('l2', 0.2)('l2', 1)</span>
+<span class="s0">parameters </span><span class="s2">= {</span>
+    <span class="s3">'penalty'</span><span class="s2">:(</span><span class="s3">'l2'</span><span class="s2">,</span><span class="s3">'l1'</span><span class="s2">),</span>
+    <span class="s3">'C'</span><span class="s2">:(</span><span class="s5">0.01</span><span class="s2">, </span><span class="s5">0.05</span><span class="s2">, </span><span class="s5">0.1</span><span class="s2">, </span><span class="s5">0.2</span><span class="s2">, </span><span class="s5">1</span><span class="s2">)</span>
+<span class="s2">}</span>
+
+<span class="s0">Grid_LR </span><span class="s2">= </span><span class="s0">GridSearchCV</span><span class="s2">(</span><span class="s0">LogisticRegression</span><span class="s2">(</span><span class="s0">solver</span><span class="s2">=</span><span class="s3">'liblinear'</span><span class="s2">),</span><span class="s0">parameters</span><span class="s2">, </span><span class="s0">cv </span><span class="s2">= </span><span class="s5">5</span><span class="s2">)</span>
+<span class="s0">Grid_LR</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">, </span><span class="s0">y_train</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># the best hyperparameter combination</span>
+<span class="s4"># C = 1/lambda</span>
+<span class="s0">print_grid_search_metrics</span><span class="s2">(</span><span class="s0">Grid_LR</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># best model</span>
+<span class="s0">best_LR_model </span><span class="s2">= </span><span class="s0">Grid_LR</span><span class="s2">.</span><span class="s0">best_estimator_</span><hr class="ls0"><span class="s0">#%% 
+best_LR_model</span><span class="s2">.</span><span class="s0">predict</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+best_LR_model</span><span class="s2">.</span><span class="s0">score</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">, </span><span class="s0">y_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+LR_models </span><span class="s2">= </span><span class="s0">pd</span><span class="s2">.</span><span class="s0">DataFrame</span><span class="s2">(</span><span class="s0">Grid_LR</span><span class="s2">.</span><span class="s0">cv_results_</span><span class="s2">)</span>
+<span class="s0">res </span><span class="s2">= (</span><span class="s0">LR_models</span><span class="s2">.</span><span class="s0">pivot</span><span class="s2">(</span><span class="s0">index</span><span class="s2">=</span><span class="s3">'param_penalty'</span><span class="s2">, </span><span class="s0">columns</span><span class="s2">=</span><span class="s3">'param_C'</span><span class="s2">, </span><span class="s0">values</span><span class="s2">=</span><span class="s3">'mean_test_score'</span><span class="s2">))</span>
+<span class="s0">_ </span><span class="s2">= </span><span class="s0">sns</span><span class="s2">.</span><span class="s0">heatmap</span><span class="s2">(</span><span class="s0">res</span><span class="s2">, </span><span class="s0">cmap</span><span class="s2">=</span><span class="s3">'viridis'</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+#### Part 3.2.2: Find Optimal Hyperparameters: KNN <hr class="ls0">#%% 
+</span><span class="s4"># Possible hyperparamter options for KNN</span>
+<span class="s4"># Choose k</span>
+<span class="s0">parameters </span><span class="s2">= {</span>
+    <span class="s3">'n_neighbors'</span><span class="s2">:[</span><span class="s5">1</span><span class="s2">,</span><span class="s5">3</span><span class="s2">,</span><span class="s5">5</span><span class="s2">,</span><span class="s5">7</span><span class="s2">,</span><span class="s5">9</span><span class="s2">]</span>
+<span class="s2">}</span>
+<span class="s0">Grid_KNN </span><span class="s2">= </span><span class="s0">GridSearchCV</span><span class="s2">(</span><span class="s0">KNeighborsClassifier</span><span class="s2">(),</span><span class="s0">parameters</span><span class="s2">, </span><span class="s0">cv</span><span class="s2">=</span><span class="s5">5</span><span class="s2">)</span>
+<span class="s0">Grid_KNN</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">, </span><span class="s0">y_train</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># best k</span>
+<span class="s0">print_grid_search_metrics</span><span class="s2">(</span><span class="s0">Grid_KNN</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+best_KNN_model </span><span class="s2">= </span><span class="s0">Grid_KNN</span><span class="s2">.</span><span class="s0">best_estimator_</span><hr class="ls0"><span class="s0">#%% 
+best_KNN_model</span><span class="s2">.</span><span class="s0">predict</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+best_KNN_model</span><span class="s2">.</span><span class="s0">score</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">, </span><span class="s0">y_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+#### Part 3.2.3: Find Optimal Hyperparameters: Random Forest <hr class="ls0">#%% 
+</span><span class="s4"># Possible hyperparamter options for Random Forest</span>
+<span class="s4"># Choose the number of trees</span>
+<span class="s0">parameters </span><span class="s2">= {</span>
+    <span class="s3">'n_estimators' </span><span class="s2">: [</span><span class="s5">60</span><span class="s2">,</span><span class="s5">80</span><span class="s2">,</span><span class="s5">100</span><span class="s2">],</span>
+    <span class="s3">'max_depth'</span><span class="s2">: [</span><span class="s5">1</span><span class="s2">,</span><span class="s5">5</span><span class="s2">,</span><span class="s5">10</span><span class="s2">]</span>
+<span class="s2">}</span>
+<span class="s0">Grid_RF </span><span class="s2">= </span><span class="s0">GridSearchCV</span><span class="s2">(</span><span class="s0">RandomForestClassifier</span><span class="s2">(),</span><span class="s0">parameters</span><span class="s2">, </span><span class="s0">cv</span><span class="s2">=</span><span class="s5">5</span><span class="s2">)</span>
+<span class="s0">Grid_RF</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_train</span><span class="s2">, </span><span class="s0">y_train</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># best number of tress</span>
+<span class="s0">print_grid_search_metrics</span><span class="s2">(</span><span class="s0">Grid_RF</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># best random forest</span>
+<span class="s0">best_RF_model </span><span class="s2">= </span><span class="s0">Grid_RF</span><span class="s2">.</span><span class="s0">best_estimator_</span><hr class="ls0"><span class="s0">#%% 
+best_RF_model</span><hr class="ls0"><span class="s0">#%% 
+best_RF_model</span><span class="s2">.</span><span class="s0">score</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">, </span><span class="s0">y_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+####Part 3.3: Model Evaluation - Confusion Matrix (Precision, Recall, Accuracy) 
+ 
+class of interest as positive 
+ 
+TP: correctly labeled real churn 
+ 
+Precision(PPV, positive predictive value): tp / (tp + fp); 
+Total number of true predictive churn divided by the total number of predictive churn; 
+High Precision means low fp, not many return users were predicted as churn users. 
+ 
+ 
+Recall(sensitivity, hit rate, true positive rate): tp / (tp + fn) 
+Predict most postive or churn user correctly. High recall means low fn, not many churn users were predicted as return users. <hr class="ls0">#%% 
+</span><span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">metrics </span><span class="s1">import </span><span class="s0">confusion_matrix</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">metrics </span><span class="s1">import </span><span class="s0">classification_report</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">metrics </span><span class="s1">import </span><span class="s0">precision_score</span>
+<span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">metrics </span><span class="s1">import </span><span class="s0">recall_score</span>
+
+<span class="s4"># calculate accuracy, precision and recall, [[tn, fp],[]]</span>
+<span class="s1">def </span><span class="s0">cal_evaluation</span><span class="s2">(</span><span class="s0">classifier</span><span class="s2">, </span><span class="s0">cm</span><span class="s2">):</span>
+    <span class="s0">tn </span><span class="s2">= </span><span class="s0">cm</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">0</span><span class="s2">]</span>
+    <span class="s0">fp </span><span class="s2">= </span><span class="s0">cm</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s5">1</span><span class="s2">]</span>
+    <span class="s0">fn </span><span class="s2">= </span><span class="s0">cm</span><span class="s2">[</span><span class="s5">1</span><span class="s2">][</span><span class="s5">0</span><span class="s2">]</span>
+    <span class="s0">tp </span><span class="s2">= </span><span class="s0">cm</span><span class="s2">[</span><span class="s5">1</span><span class="s2">][</span><span class="s5">1</span><span class="s2">]</span>
+    <span class="s0">accuracy  </span><span class="s2">= (</span><span class="s0">tp </span><span class="s2">+ </span><span class="s0">tn</span><span class="s2">) / (</span><span class="s0">tp </span><span class="s2">+ </span><span class="s0">fp </span><span class="s2">+ </span><span class="s0">fn </span><span class="s2">+ </span><span class="s0">tn </span><span class="s2">+ </span><span class="s5">0.0</span><span class="s2">)</span>
+    <span class="s0">precision </span><span class="s2">= </span><span class="s0">tp </span><span class="s2">/ (</span><span class="s0">tp </span><span class="s2">+ </span><span class="s0">fp </span><span class="s2">+ </span><span class="s5">0.0</span><span class="s2">)</span>
+    <span class="s0">recall </span><span class="s2">= </span><span class="s0">tp </span><span class="s2">/ (</span><span class="s0">tp </span><span class="s2">+ </span><span class="s0">fn </span><span class="s2">+ </span><span class="s5">0.0</span><span class="s2">)</span>
+    <span class="s0">print </span><span class="s2">(</span><span class="s0">classifier</span><span class="s2">)</span>
+    <span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;Accuracy is: &quot; </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">accuracy</span><span class="s2">))</span>
+    <span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;precision is: &quot; </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">precision</span><span class="s2">))</span>
+    <span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;recall is: &quot; </span><span class="s2">+ </span><span class="s0">str</span><span class="s2">(</span><span class="s0">recall</span><span class="s2">))</span>
+    <span class="s0">print </span><span class="s2">()</span>
+
+<span class="s4"># print out confusion matrices</span>
+<span class="s1">def </span><span class="s0">draw_confusion_matrices</span><span class="s2">(</span><span class="s0">confusion_matricies</span><span class="s2">):</span>
+    <span class="s0">class_names </span><span class="s2">= [</span><span class="s3">'Not'</span><span class="s2">,</span><span class="s3">'Churn'</span><span class="s2">]</span>
+    <span class="s1">for </span><span class="s0">cm </span><span class="s1">in </span><span class="s0">confusion_matrices</span><span class="s2">:</span>
+        <span class="s0">classifier</span><span class="s2">, </span><span class="s0">cm </span><span class="s2">= </span><span class="s0">cm</span><span class="s2">[</span><span class="s5">0</span><span class="s2">], </span><span class="s0">cm</span><span class="s2">[</span><span class="s5">1</span><span class="s2">]</span>
+        <span class="s0">cal_evaluation</span><span class="s2">(</span><span class="s0">classifier</span><span class="s2">, </span><span class="s0">cm</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># Confusion matrix, accuracy, precison and recall for random forest and logistic regression</span>
+<span class="s0">confusion_matrices </span><span class="s2">= [</span>
+    <span class="s2">(</span><span class="s3">&quot;Random Forest&quot;</span><span class="s2">, </span><span class="s0">confusion_matrix</span><span class="s2">(</span><span class="s0">y_test</span><span class="s2">,</span><span class="s0">best_RF_model</span><span class="s2">.</span><span class="s0">predict</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">))),</span>
+    <span class="s2">(</span><span class="s3">&quot;Logistic Regression&quot;</span><span class="s2">, </span><span class="s0">confusion_matrix</span><span class="s2">(</span><span class="s0">y_test</span><span class="s2">,</span><span class="s0">best_LR_model</span><span class="s2">.</span><span class="s0">predict</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">))),</span>
+    <span class="s2">(</span><span class="s3">&quot;K nearest neighbor&quot;</span><span class="s2">, </span><span class="s0">confusion_matrix</span><span class="s2">(</span><span class="s0">y_test</span><span class="s2">, </span><span class="s0">best_KNN_model</span><span class="s2">.</span><span class="s0">predict</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)))</span>
+<span class="s2">]</span>
+
+<span class="s0">draw_confusion_matrices</span><span class="s2">(</span><span class="s0">confusion_matrices</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+### Part 3.4: Model Evaluation - ROC &amp; AUC <hr class="ls0">#%% md 
+RandomForestClassifier, KNeighborsClassifier and LogisticRegression have predict_prob() function <hr class="ls0">#%% md 
+#### Part 3.4.1: ROC of RF Model <hr class="ls0">#%% 
+</span><span class="s1">from </span><span class="s0">sklearn</span><span class="s2">.</span><span class="s0">metrics </span><span class="s1">import </span><span class="s0">roc_curve</span>
+<span class="s1">from </span><span class="s0">sklearn </span><span class="s1">import </span><span class="s0">metrics</span>
+
+<span class="s4"># Use predict_proba to get the probability results of Random Forest</span>
+<span class="s0">y_pred_rf </span><span class="s2">= </span><span class="s0">best_RF_model</span><span class="s2">.</span><span class="s0">predict_proba</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)[:, </span><span class="s5">1</span><span class="s2">]</span>
+<span class="s0">fpr_rf</span><span class="s2">, </span><span class="s0">tpr_rf</span><span class="s2">, </span><span class="s0">_ </span><span class="s2">= </span><span class="s0">roc_curve</span><span class="s2">(</span><span class="s0">y_test</span><span class="s2">, </span><span class="s0">y_pred_rf</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+best_RF_model</span><span class="s2">.</span><span class="s0">predict_proba</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># ROC curve of Random Forest result</span>
+<span class="s1">import </span><span class="s0">matplotlib</span><span class="s2">.</span><span class="s0">pyplot </span><span class="s1">as </span><span class="s0">plt</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">figure</span><span class="s2">(</span><span class="s5">1</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">plot</span><span class="s2">([</span><span class="s5">0</span><span class="s2">, </span><span class="s5">1</span><span class="s2">], [</span><span class="s5">0</span><span class="s2">, </span><span class="s5">1</span><span class="s2">], </span><span class="s3">'k--'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">plot</span><span class="s2">(</span><span class="s0">fpr_rf</span><span class="s2">, </span><span class="s0">tpr_rf</span><span class="s2">, </span><span class="s0">label</span><span class="s2">=</span><span class="s3">'RF'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">xlabel</span><span class="s2">(</span><span class="s3">'False positive rate'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">ylabel</span><span class="s2">(</span><span class="s3">'True positive rate'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">title</span><span class="s2">(</span><span class="s3">'ROC curve - RF model'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">legend</span><span class="s2">(</span><span class="s0">loc</span><span class="s2">=</span><span class="s3">'best'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">show</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s1">from </span><span class="s0">sklearn </span><span class="s1">import </span><span class="s0">metrics</span>
+
+<span class="s4"># AUC score</span>
+<span class="s0">metrics</span><span class="s2">.</span><span class="s0">auc</span><span class="s2">(</span><span class="s0">fpr_rf</span><span class="s2">,</span><span class="s0">tpr_rf</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+#### Part 3.4.1: ROC of LR Model <hr class="ls0">#%% 
+</span><span class="s4"># Use predict_proba to get the probability results of Logistic Regression</span>
+<span class="s0">y_pred_lr </span><span class="s2">= </span><span class="s0">best_LR_model</span><span class="s2">.</span><span class="s0">predict_proba</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)[:, </span><span class="s5">1</span><span class="s2">]</span>
+<span class="s0">fpr_lr</span><span class="s2">, </span><span class="s0">tpr_lr</span><span class="s2">, </span><span class="s0">thresh </span><span class="s2">= </span><span class="s0">roc_curve</span><span class="s2">(</span><span class="s0">y_test</span><span class="s2">, </span><span class="s0">y_pred_lr</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+best_LR_model</span><span class="s2">.</span><span class="s0">predict_proba</span><span class="s2">(</span><span class="s0">X_test</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># ROC Curve</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">figure</span><span class="s2">(</span><span class="s5">1</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">plot</span><span class="s2">([</span><span class="s5">0</span><span class="s2">, </span><span class="s5">1</span><span class="s2">], [</span><span class="s5">0</span><span class="s2">, </span><span class="s5">1</span><span class="s2">], </span><span class="s3">'k--'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">plot</span><span class="s2">(</span><span class="s0">fpr_lr</span><span class="s2">, </span><span class="s0">tpr_lr</span><span class="s2">, </span><span class="s0">label</span><span class="s2">=</span><span class="s3">'LR'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">xlabel</span><span class="s2">(</span><span class="s3">'False positive rate'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">ylabel</span><span class="s2">(</span><span class="s3">'True positive rate'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">title</span><span class="s2">(</span><span class="s3">'ROC curve - LR Model'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">legend</span><span class="s2">(</span><span class="s0">loc</span><span class="s2">=</span><span class="s3">'best'</span><span class="s2">)</span>
+<span class="s0">plt</span><span class="s2">.</span><span class="s0">show</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># AUC score</span>
+<span class="s0">metrics</span><span class="s2">.</span><span class="s0">auc</span><span class="s2">(</span><span class="s0">fpr_lr</span><span class="s2">,</span><span class="s0">tpr_lr</span><span class="s2">)</span><hr class="ls0"><span class="s0">#%% md 
+# Part 4: Model Extra Functionality <hr class="ls0">#%% md 
+### Part 4.1:  Logistic Regression Model <hr class="ls0">#%% md 
+The corelated features that we are interested in <hr class="ls0">#%% 
+X_with_corr </span><span class="s2">= </span><span class="s0">X</span><span class="s2">.</span><span class="s0">copy</span><span class="s2">()</span>
+
+<span class="s0">X_with_corr </span><span class="s2">= </span><span class="s0">OneHotEncoding</span><span class="s2">(</span><span class="s0">X_with_corr</span><span class="s2">, </span><span class="s0">enc_ohe</span><span class="s2">, [</span><span class="s3">'Geography'</span><span class="s2">])</span>
+<span class="s0">X_with_corr</span><span class="s2">[</span><span class="s3">'Gender'</span><span class="s2">] = </span><span class="s0">enc_oe</span><span class="s2">.</span><span class="s0">transform</span><span class="s2">(</span><span class="s0">X_with_corr</span><span class="s2">[[</span><span class="s3">'Gender'</span><span class="s2">]])</span>
+<span class="s0">X_with_corr</span><span class="s2">[</span><span class="s3">'SalaryInRMB'</span><span class="s2">] = </span><span class="s0">X_with_corr</span><span class="s2">[</span><span class="s3">'EstimatedSalary'</span><span class="s2">] * </span><span class="s5">6.4</span>
+<span class="s0">X_with_corr</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># add L2 regularization to logistic regression</span>
+<span class="s4"># check the coef for feature selection</span>
+<span class="s0">np</span><span class="s2">.</span><span class="s0">random</span><span class="s2">.</span><span class="s0">seed</span><span class="s2">()</span>
+<span class="s0">scaler </span><span class="s2">= </span><span class="s0">StandardScaler</span><span class="s2">()</span>
+<span class="s0">X_l2 </span><span class="s2">= </span><span class="s0">scaler</span><span class="s2">.</span><span class="s0">fit_transform</span><span class="s2">(</span><span class="s0">X_with_corr</span><span class="s2">)</span>
+<span class="s0">LRmodel_l2 </span><span class="s2">= </span><span class="s0">LogisticRegression</span><span class="s2">(</span><span class="s0">penalty</span><span class="s2">=</span><span class="s3">&quot;l2&quot;</span><span class="s2">, </span><span class="s0">C </span><span class="s2">= </span><span class="s5">0.1</span><span class="s2">, </span><span class="s0">solver</span><span class="s2">=</span><span class="s3">'liblinear'</span><span class="s2">, </span><span class="s0">random_state</span><span class="s2">=</span><span class="s5">42</span><span class="s2">)</span>
+<span class="s0">LRmodel_l2</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_l2</span><span class="s2">, </span><span class="s0">y</span><span class="s2">)</span>
+<span class="s0">LRmodel_l2</span><span class="s2">.</span><span class="s0">coef_</span><span class="s2">[</span><span class="s5">0</span><span class="s2">]</span>
+
+<span class="s0">indices </span><span class="s2">= </span><span class="s0">np</span><span class="s2">.</span><span class="s0">argsort</span><span class="s2">(</span><span class="s0">abs</span><span class="s2">(</span><span class="s0">LRmodel_l2</span><span class="s2">.</span><span class="s0">coef_</span><span class="s2">[</span><span class="s5">0</span><span class="s2">]))[::-</span><span class="s5">1</span><span class="s2">]</span>
+
+<span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;Logistic Regression (L2) Coefficients&quot;</span><span class="s2">)</span>
+<span class="s1">for </span><span class="s0">ind </span><span class="s1">in </span><span class="s0">range</span><span class="s2">(</span><span class="s0">X_with_corr</span><span class="s2">.</span><span class="s0">shape</span><span class="s2">[</span><span class="s5">1</span><span class="s2">]):</span>
+  <span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;{0} : {1}&quot;</span><span class="s2">.</span><span class="s0">format</span><span class="s2">(</span><span class="s0">X_with_corr</span><span class="s2">.</span><span class="s0">columns</span><span class="s2">[</span><span class="s0">indices</span><span class="s2">[</span><span class="s0">ind</span><span class="s2">]],</span><span class="s0">round</span><span class="s2">(</span><span class="s0">LRmodel_l2</span><span class="s2">.</span><span class="s0">coef_</span><span class="s2">[</span><span class="s5">0</span><span class="s2">][</span><span class="s0">indices</span><span class="s2">[</span><span class="s0">ind</span><span class="s2">]], </span><span class="s5">4</span><span class="s2">)))</span><hr class="ls0"><span class="s0">#%% md 
+### Part 4.2:  Random Forest Model - Feature Importance Discussion <hr class="ls0">#%% 
+X_RF </span><span class="s2">= </span><span class="s0">X</span><span class="s2">.</span><span class="s0">copy</span><span class="s2">()</span>
+
+<span class="s0">X_RF </span><span class="s2">= </span><span class="s0">OneHotEncoding</span><span class="s2">(</span><span class="s0">X_RF</span><span class="s2">, </span><span class="s0">enc_ohe</span><span class="s2">, [</span><span class="s3">'Geography'</span><span class="s2">])</span>
+<span class="s0">X_RF</span><span class="s2">[</span><span class="s3">'Gender'</span><span class="s2">] = </span><span class="s0">enc_oe</span><span class="s2">.</span><span class="s0">transform</span><span class="s2">(</span><span class="s0">X_RF</span><span class="s2">[[</span><span class="s3">'Gender'</span><span class="s2">]])</span>
+
+<span class="s0">X_RF</span><span class="s2">.</span><span class="s0">head</span><span class="s2">()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s4"># check feature importance of random forest for feature selection</span>
+<span class="s0">forest </span><span class="s2">= </span><span class="s0">RandomForestClassifier</span><span class="s2">()</span>
+<span class="s0">forest</span><span class="s2">.</span><span class="s0">fit</span><span class="s2">(</span><span class="s0">X_RF</span><span class="s2">, </span><span class="s0">y</span><span class="s2">)</span>
+
+<span class="s0">importances </span><span class="s2">= </span><span class="s0">forest</span><span class="s2">.</span><span class="s0">feature_importances_</span>
+
+<span class="s0">indices </span><span class="s2">= </span><span class="s0">np</span><span class="s2">.</span><span class="s0">argsort</span><span class="s2">(</span><span class="s0">importances</span><span class="s2">)[::-</span><span class="s5">1</span><span class="s2">]</span>
+
+<span class="s4"># Print the feature ranking</span>
+<span class="s0">print</span><span class="s2">(</span><span class="s3">&quot;Feature importance ranking by Random Forest Model:&quot;</span><span class="s2">)</span>
+<span class="s1">for </span><span class="s0">ind </span><span class="s1">in </span><span class="s0">range</span><span class="s2">(</span><span class="s0">X</span><span class="s2">.</span><span class="s0">shape</span><span class="s2">[</span><span class="s5">1</span><span class="s2">]):</span>
+  <span class="s0">print </span><span class="s2">(</span><span class="s3">&quot;{0} : {1}&quot;</span><span class="s2">.</span><span class="s0">format</span><span class="s2">(</span><span class="s0">X_RF</span><span class="s2">.</span><span class="s0">columns</span><span class="s2">[</span><span class="s0">indices</span><span class="s2">[</span><span class="s0">ind</span><span class="s2">]],</span><span class="s0">round</span><span class="s2">(</span><span class="s0">importances</span><span class="s2">[</span><span class="s0">indices</span><span class="s2">[</span><span class="s0">ind</span><span class="s2">]], </span><span class="s5">4</span><span class="s2">)))</span></pre>
+</body>
+</html>
